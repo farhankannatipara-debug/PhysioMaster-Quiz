@@ -2,17 +2,16 @@
 name: Build PhysioMaster APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout project
@@ -27,13 +26,20 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install Android SDK
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Build debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: PhysioMaster-debug-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
